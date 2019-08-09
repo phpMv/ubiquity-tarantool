@@ -1,0 +1,39 @@
+{
+	"name" : "phpmv/ubiquity-tarantool",
+	"description" : "Tarantool wrapper for PHP Ubiquity framework",
+	"type" : "extension",
+	"keywords" : [
+		"php",
+		"framework",
+		"mvc",
+		"orm",
+		"database",
+		"tarantool",
+		"sql",
+		"nosql"
+	],
+	"require" : {
+		"php" : ">7.0",
+		"phpmv/ubiquity": "dev-master",
+		"tarantool/client": "^0.5.2"
+	},
+	"license" : "Apache-2.0",
+	"authors" : [{
+			"name" : "Jean-Christophe HERON",
+			"email" : "myaddressmail@gmail.com",
+			"role" : "Lead developer"
+		}
+	],
+	"autoload" : {
+		"psr-4" : {
+			"Ubiquity\\" : "src/Ubiquity/"
+		}
+	},
+	"extra" : {
+		"branch-alias" : {
+			"dev-master" : "1.0.x-dev"
+		}
+	},
+	"require-dev" : {
+	}
+}
