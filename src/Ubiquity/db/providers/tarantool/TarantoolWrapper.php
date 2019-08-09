@@ -164,6 +164,16 @@ class TarantoolWrapper extends AbstractDbWrapper {
 		}
 		return $pks;
 	}
+	
+	public function getFieldsInfos($tableName) {
+		$idSpace = $this->getSpaceIdByName ( $tableName );
+		$fieldsInfos = $this->dbInstance->getSpaceById ( Space::VSPACE_ID )->select ( Criteria::key ( [ $idSpace ] ) ) [0] [6];
+		$result=[];
+		foreach ($fieldsInfos as $infoField){
+			$result[$infoField['name']]=['Type'=>$infoField['type'],'Nullable'=>$infoField['is_nullable']];
+		}
+		return $result;
+	}
 
 	private function getSpaceIdByName(string $spaceName): int {
 		$schema = $this->dbInstance->getSpaceById ( Space::VSPACE_ID );

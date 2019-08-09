@@ -14,7 +14,7 @@
 	],
 	"require" : {
 		"php" : ">7.0",
-		"phpmv/ubiquity": "dev-master",
+		"phpmv/ubiquity": "dev-multi-db-types",
 		"tarantool/client": "^0.5.2"
 	},
 	"license" : "Apache-2.0",
