@@ -19,6 +19,10 @@ use Ubiquity\db\providers\AbstractDbWrapper;
 class TarantoolWrapper extends AbstractDbWrapper {
 	protected $transactionLevel = 0;
 	protected $lastInsertId;
+	
+	public function __construct($dbType = 'default') {
+		$this->quote = '"';
+	}
 
 	public function fetchAllColumn($statement, array $values = null, string $column = null) {
 		if ($statement->query ( $values )) {
@@ -69,11 +73,23 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	public function connect(string $dbType, $dbName, $serverName, string $port, string $user, string $password, array $options) {
-		$this->dbInstance = Client::fromDsn ( $this->getDSN ( $serverName, $port, $dbName ) );
+		$infoUser='';
+		$opts='';
+		if($user!=null){
+			$infoUser=$user;
+			if($password!=null){
+				$infoUser.=':'.$password;
+			}
+			$serverName=$infoUser.'@'.$serverName;
+		}
+		if(\count($options)>0){
+			$opts='?'.\http_build_query($options);
+		}
+		$this->dbInstance = Client::fromDsn ( $this->getDSN ( $serverName, $port, $dbName ).$opts );
 	}
 
 	public function getDSN(string $serverName, string $port, string $dbName, string $dbType = 'mysql') {
-		return $dbType . ':dbname=' . $dbName . ';host=' . $serverName . ';charset=UTF8;port=' . $port;
+		return 'tcp://'.$serverName.':'. $port;
 	}
 
 	public function bindValueFromStatement($statement, $parameter, $value) {
@@ -98,13 +114,10 @@ class TarantoolWrapper extends AbstractDbWrapper {
 
 	public function getTablesName() {
 		$schema = $this->dbInstance->getSpaceById ( Space::VSPACE_ID );
-		$rs = $schema->select ( Criteria::index ( IndexIds::SPACE_NAME ) );
-
+		$rs = $schema->select(Criteria::key([512])->andGeIterator());
 		$result = [ ];
 		foreach ( $rs as $item ) {
-			if (\substr ( $item [2], 0, \strlen ( '_' ) ) !== '_') {
-				$result [] = $item [2];
-			}
+			$result [] = $item [2];
 		}
 		return $result;
 	}
