@@ -5,7 +5,6 @@ namespace Ubiquity\db\providers\tarantool;
 use Tarantool\Client\Client;
 use Tarantool\Client\Schema\Space;
 use Tarantool\Client\Schema\Criteria;
-use Tarantool\Client\Schema\IndexIds;
 use Ubiquity\db\providers\AbstractDbWrapper;
 
 /**
@@ -187,13 +186,49 @@ class TarantoolWrapper extends AbstractDbWrapper {
 		}
 		return $result;
 	}
+	
+	public function getForeignKeys($tableName, $pkName, $dbName = null) {
+		$result=[];
+		$v_space=$this->dbInstance->getSpaceById ( Space::VSPACE_ID );
+		$idSpace = $this->getSpaceIdByName ( $tableName );
+		$fieldsInfos = $v_space->select ( Criteria::key ( [ $idSpace ] ) ) [0] [6];
+		$pkFieldNum=$this->getFieldNum($pkName,$fieldsInfos);
+		$spacefk=$this->dbInstance->getSpaceById ( 356 );//_fk_constraint space id
+		$foreignKeysInfos=$spacefk->select(Criteria::index(0));
+		foreach ($foreignKeysInfos as $fkInfos){
+			if($fkInfos[2]===$idSpace){//parent_id same as $tableName id
+				foreach ($fkInfos[8] as $parentColIndex=>$parent_cols){
+					if($parent_cols===$pkFieldNum){
+						$fkFieldNum=$fkInfos[7][$parentColIndex];//child_cols
+						$fkSpaceNum=$fkInfos[1];//child_id
+						$fkFieldsInfos = $v_space->select ( Criteria::key ( [ $fkSpaceNum ] ) ) [0] [6];
+						$result[]=['COLUMN_NAME'=>$this->getFieldName($fkFieldNum, $fkFieldsInfos),'TABLE_NAME'=>$this->getSpaceName($fkSpaceNum,$v_space)];
+					}
+				}
+			}
+		}
+		return $result;
+	}
+	
+	private function getSpaceName($id_space,$v_space) {
+		$rs = $v_space->select(Criteria::key([$id_space]));
+		return \current($rs)[2];
+	}
+	
+	private function getFieldNum($fieldName,$fieldsInfos){
+		foreach ($fieldsInfos as $num=>$value){
+			if($value['name']===$fieldName){
+				return $num;
+			}
+		}
+		return false;
+	}
+	
+	private function getFieldName($fieldNum,$fieldsInfos){
+		return $fieldsInfos[$fieldNum]['name'];
+	}
 
 	private function getSpaceIdByName(string $spaceName): int {
-		$schema = $this->dbInstance->getSpaceById ( Space::VSPACE_ID );
-		$data = $schema->select ( Criteria::key ( [ $spaceName ] )->andIndex ( IndexIds::SPACE_NAME ) );
-		if ([ ] === $data) {
-			throw new \Exception ( "unknownSpace($spaceName)" );
-		}
-		return $data [0] [0];
+		return $this->dbInstance->getSpace($spaceName)->getId();
 	}
 }
