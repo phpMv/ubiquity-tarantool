@@ -29,7 +29,7 @@ class TarantoolStatement {
 	 *
 	 * @var SqlQueryResult
 	 */
-	protected $datas;
+	protected $queryResult;
 	
 	protected $isSelect=false;
 
@@ -66,7 +66,7 @@ class TarantoolStatement {
 		$request = new ExecuteRequest($this->sql, $params);
 		$response = $this->dbInstance->getHandler()->handle($request);
 		
-		return new SqlQueryResult(
+		return $this->queryResult=new SqlQueryResult(
 			$response->getBodyField(Keys::DATA),
 			$response->getBodyField(Keys::METADATA)
 		);
@@ -120,7 +120,7 @@ class TarantoolStatement {
 	 * @return array
 	 */
 	public function fetchAll() {
-		return $this->datas->getData ();
+		return $this->queryResult->getData ();
 	}
 	
 	/**
@@ -130,10 +130,8 @@ class TarantoolStatement {
 	 * @return mixed
 	 */
 	public function fetchColumn($column) {
-		if(\count($this->datas)>0){
-			return (\current($this->datas)[$column]) ?? null;
-		}
-		return null;
+		$first=$this->queryResult->getFirst();
+		return $first[$column] ?? null;
 	}
 
 	/**
@@ -144,7 +142,7 @@ class TarantoolStatement {
 	 */
 	public function fetchAllColumn($column) {
 		$result = [ ];
-		$datas = $this->datas->getData ();
+		$datas = $this->queryResult->getData ();
 		foreach ( $datas as $data ) {
 			$result [] = $data [$column] ?? null;
 		}
@@ -157,7 +155,7 @@ class TarantoolStatement {
 	 * @return array|NULL
 	 */
 	public function fetch() {
-		return $this->datas->getFirst ();
+		return $this->queryResult->getFirst ();
 	}
 
 	/**
@@ -166,7 +164,7 @@ class TarantoolStatement {
 	 * @return number
 	 */
 	public function rowCount() {
-		return $this->datas->count ();
+		return $this->queryResult->count ();
 	}
 }
 
