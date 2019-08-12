@@ -103,6 +103,19 @@ class TarantoolStatement {
 	public function fetchAll() {
 		return $this->datas->getData ();
 	}
+	
+	/**
+	 * Returns the first value in result set for a column
+	 *
+	 * @param int $column
+	 * @return mixed
+	 */
+	public function fetchColumn($column) {
+		if(\count($this->datas)>0){
+			return (\current($this->datas)[$column]) ?? null;
+		}
+		return null;
+	}
 
 	/**
 	 * Returns all values in result set for a column
