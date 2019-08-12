@@ -37,7 +37,7 @@ class TarantoolStatement {
 	 *
 	 * @var array of bind parameters=>values
 	 */
-	protected $params;
+	protected $params=[];
 
 	protected $sql;
 	
@@ -54,7 +54,7 @@ class TarantoolStatement {
 		return $params;
 	}
 	
-	protected function executeUpdate($params=NULL): SqlUpdateResult{
+	protected function executeUpdate($params=[]): SqlUpdateResult{
 		$request = new ExecuteRequest($this->sql, $params);
 		
 		return new SqlUpdateResult(
@@ -62,7 +62,7 @@ class TarantoolStatement {
 		);
 	}
 	
-	protected function executeQuery($params=NULL) : SqlQueryResult{
+	protected function executeQuery($params=[]) : SqlQueryResult{
 		$request = new ExecuteRequest($this->sql, $params);
 		$response = $this->handler->handle($request);
 		
