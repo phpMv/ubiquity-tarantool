@@ -58,13 +58,13 @@ class TarantoolStatement {
 		$request = new ExecuteRequest($this->sql, $params);
 		
 		return new SqlUpdateResult(
-			$this->handler->handle($request)->getBodyField(Keys::SQL_INFO)
+			$this->dbInstance->getHandler()->handle($request)->getBodyField(Keys::SQL_INFO)
 		);
 	}
 	
 	protected function executeQuery($params=[]) : SqlQueryResult{
 		$request = new ExecuteRequest($this->sql, $params);
-		$response = $this->handler->handle($request);
+		$response = $this->dbInstance->getHandler()->handle($request);
 		
 		return new SqlQueryResult(
 			$response->getBodyField(Keys::DATA),
