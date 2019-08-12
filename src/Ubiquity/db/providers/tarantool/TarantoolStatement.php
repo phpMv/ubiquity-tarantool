@@ -91,7 +91,8 @@ class TarantoolStatement {
 			return $this->executeQuery($params);
 		}
 		$res = $this->executeUpdate($params);
-		$this->dbInstance->lastInsertId = \current ( $res->getAutoincrementIds () );
+		$ids=$res->getAutoincrementIds();
+		$this->dbInstance->lastInsertId = \is_array($ids)?\current ( $ids ):null;
 		return $res->count ();
 	}
 
@@ -122,6 +123,7 @@ class TarantoolStatement {
 	 * @return array
 	 */
 	public function fetchAll() {
+		var_dump($this->queryResult->getData ());
 		return $this->queryResult->getData ();
 	}
 	
