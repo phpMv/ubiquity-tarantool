@@ -74,6 +74,29 @@ class TarantoolStatement {
 		);
 	}
 	
+	protected function getFields(){
+		$metas=$this->queryResult->getMetadata();
+		$result=[];
+		foreach ($metas as $meta){
+			$result[]=\current($meta);
+		}
+		return $result;
+	}
+	
+	protected function getDatas(){
+		$datas=$this->queryResult->getData();
+		$fields=$this->getFields();
+		$result=[];
+		foreach ($datas as $row){
+			$resultRow=[];
+			foreach ($row as $index=>$value){
+				$resultRow[$fields[$index]]=$value;
+			}
+			$result[]=$resultRow;
+		}
+		return $result;
+	}
+	
 	public function __construct(Client $dbInstance, $sql = null) {
 		$this->dbInstance = $dbInstance;
 		$this->sql = $sql;
@@ -123,8 +146,7 @@ class TarantoolStatement {
 	 * @return array
 	 */
 	public function fetchAll() {
-		var_dump($this->queryResult->getData ());
-		return $this->queryResult->getData ();
+		return $this->getDatas();
 	}
 	
 	/**
@@ -159,7 +181,13 @@ class TarantoolStatement {
 	 * @return array|NULL
 	 */
 	public function fetch() {
-		return $this->queryResult->getFirst ();
+		$row=$this->queryResult->getFirst ();
+		$fields=$this->getFields();
+		$result=[];
+		foreach ($row as $index=>$value){
+				$result[$fields[$index]]=$value;
+			}
+		return $result;
 	}
 
 	/**
