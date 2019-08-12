@@ -4,6 +4,9 @@ namespace Ubiquity\db\providers\tarantool;
 
 use Tarantool\Client\Client;
 use Tarantool\Client\SqlQueryResult;
+use Tarantool\Client\Request\ExecuteRequest;
+use Tarantool\Client\SqlUpdateResult;
+use Tarantool\Client\Keys;
 
 /**
  * Represents a Tarantool statement (for compatibility reasons with other DBMS).
@@ -39,6 +42,36 @@ class TarantoolStatement {
 	protected $sql;
 	
 	
+	protected function unpackParams($params){
+		
+		if((\array_keys ( $params ) !== \range ( 0, \count ( $params ) - 1 ))){
+			$result=[];
+			foreach ($params as $k=>$param){
+				$result[]=[':'.$k=>$param];
+			}
+			return $result;
+		}
+		return $params;
+	}
+	
+	protected function executeUpdate($params=NULL): SqlUpdateResult{
+		$request = new ExecuteRequest($this->sql, $params);
+		
+		return new SqlUpdateResult(
+			$this->handler->handle($request)->getBodyField(Keys::SQL_INFO)
+		);
+	}
+	
+	protected function executeQuery($params=NULL) : SqlQueryResult{
+		$request = new ExecuteRequest($this->sql, $params);
+		$response = $this->handler->handle($request);
+		
+		return new SqlQueryResult(
+			$response->getBodyField(Keys::DATA),
+			$response->getBodyField(Keys::METADATA)
+		);
+	}
+	
 	public function __construct(Client $dbInstance, $sql = null) {
 		$this->dbInstance = $dbInstance;
 		$this->sql = $sql;
@@ -51,26 +84,15 @@ class TarantoolStatement {
 	 * @param array $params
 	 */
 	public function execute(array $params=null) {
+		$params=$params??$this->params;
 		if($this->type){
-			return $this->query($params);
+			return $this->executeQuery($params);
 		}
-		if(\is_array($params)){
-			$res = $this->dbInstance->executeUpdate ( $this->sql, ...$params );
-		}else{
-			$res = $this->dbInstance->executeUpdate ( $this->sql);
-		}
+		$res = $this->executeUpdate($params);
 		$this->dbInstance->lastInsertId = \current ( $res->getAutoincrementIds () );
 		return $res->count ();
 	}
 
-	/**
-	 * Execute a prapared statement using internal parameters created with bind methods
-	 *
-	 * @return int
-	 */
-	public function execPrepared() {
-		return $this->execute ($this->params );
-	}
 
 	/**
 	 * Binds a value to a parameter
@@ -88,11 +110,8 @@ class TarantoolStatement {
 	 * @param array $params
 	 */
 	public function query(array $params=null) {
-		if(\is_array($params)){
-			return $this->datas = $this->dbInstance->executeQuery ( $this->sql, ...$params );
-		}else{
-			return $this->datas = $this->dbInstance->executeQuery ( $this->sql);
-		}
+		$params=$params??$this->params;
+		return $this->executeQuery($params);
 	}
 
 	/**

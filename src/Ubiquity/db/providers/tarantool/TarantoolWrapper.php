@@ -96,7 +96,9 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	public function query(string $sql) {
-		return $this->dbInstance->executeQuery ( $sql );
+		$st=new TarantoolStatement($this->dbInstance,$sql);
+		$st->query();
+		return $st;
 	}
 
 	public function queryAll(string $sql, int $fetchStyle = null) {
