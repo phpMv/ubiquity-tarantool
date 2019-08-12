@@ -27,6 +27,8 @@ class TarantoolStatement {
 	 * @var SqlQueryResult
 	 */
 	protected $datas;
+	
+	protected $isSelect=false;
 
 	/**
 	 *
@@ -34,19 +36,29 @@ class TarantoolStatement {
 	 */
 	protected $params;
 
+	protected $sql;
+	
+	
 	public function __construct(Client $dbInstance, $sql = null) {
 		$this->dbInstance = $dbInstance;
 		$this->sql = $sql;
+		$this->type=(\substr ( \strtolower(\trim($sql)), 0, \strlen ( 'select' ) ) === 'select');
 	}
-	protected $sql;
 
 	/**
 	 * Executes an SQL Update statement
 	 *
-	 * @param mixed ...$params
+	 * @param array $params
 	 */
-	public function execute(...$params) {
-		$res = $this->dbInstance->executeUpdate ( $this->sql, ...$params );
+	public function execute(array $params=null) {
+		if($this->type){
+			return $this->query($params);
+		}
+		if(\is_array($params)){
+			$res = $this->dbInstance->executeUpdate ( $this->sql, ...$params );
+		}else{
+			$res = $this->dbInstance->executeUpdate ( $this->sql);
+		}
 		$this->dbInstance->lastInsertId = \current ( $res->getAutoincrementIds () );
 		return $res->count ();
 	}
@@ -57,7 +69,7 @@ class TarantoolStatement {
 	 * @return int
 	 */
 	public function execPrepared() {
-		return $this->execute ( ...$this->params );
+		return $this->execute ($this->params );
 	}
 
 	/**
@@ -73,10 +85,14 @@ class TarantoolStatement {
 	/**
 	 * Executes an SQL SELECT statement, returning a result set
 	 *
-	 * @param mixed ...$params
+	 * @param array $params
 	 */
-	public function query(...$params) {
-		return $this->datas = $this->dbInstance->executeQuery ( $this->sql, ...$params );
+	public function query(array $params=null) {
+		if(\is_array($params)){
+			return $this->datas = $this->dbInstance->executeQuery ( $this->sql, ...$params );
+		}else{
+			return $this->datas = $this->dbInstance->executeQuery ( $this->sql);
+		}
 	}
 
 	/**
