@@ -55,7 +55,7 @@ class TarantoolStatement {
 	}
 	
 	protected function executeUpdate($params=[]): SqlUpdateResult{
-		$params=$this->unpackParams($params);
+		//$params=$this->unpackParams($params);
 		$request = new ExecuteRequest($this->sql, $params);
 		
 		return new SqlUpdateResult(
@@ -64,7 +64,7 @@ class TarantoolStatement {
 	}
 	
 	protected function executeQuery($params=[]) : SqlQueryResult{
-		$params=$this->unpackParams($params);
+		//$params=$this->unpackParams($params);
 		$request = new ExecuteRequest($this->sql, $params);
 		$response = $this->dbInstance->getHandler()->handle($request);
 		return $this->queryResult=new SqlQueryResult(
