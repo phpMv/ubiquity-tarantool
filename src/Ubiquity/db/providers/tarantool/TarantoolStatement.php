@@ -156,6 +156,7 @@ class TarantoolStatement {
 	 * @return mixed
 	 */
 	public function fetchColumn($column) {
+		$column=$column??0;
 		$first=$this->queryResult->getFirst();
 		return $first[$column] ?? null;
 	}
@@ -168,6 +169,7 @@ class TarantoolStatement {
 	 */
 	public function fetchAllColumn($column) {
 		$result = [ ];
+		$column=$column??0;
 		$datas = $this->queryResult->getData ();
 		foreach ( $datas as $data ) {
 			$result [] = $data [$column] ?? null;
