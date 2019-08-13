@@ -67,7 +67,6 @@ class TarantoolStatement {
 		$params=$this->unpackParams($params);
 		$request = new ExecuteRequest($this->sql, $params);
 		$response = $this->dbInstance->getHandler()->handle($request);
-		
 		return $this->queryResult=new SqlQueryResult(
 			$response->getBodyField(Keys::DATA),
 			$response->getBodyField(Keys::METADATA)
@@ -146,7 +145,7 @@ class TarantoolStatement {
 	 * @return array
 	 */
 	public function fetchAll() {
-		return $this->getDatas();
+		return \iterator_to_array($this->queryResult);
 	}
 	
 	/**
