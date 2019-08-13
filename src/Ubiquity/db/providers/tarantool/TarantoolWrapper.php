@@ -102,11 +102,11 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	public function queryAll(string $sql, int $fetchStyle = null) {
-		return $this->dbInstance->executeQuery ( $sql )->getData ();
+		return \iterator_to_array($this->dbInstance->executeQuery ( $sql ));
 	}
 
 	public function queryColumn(string $sql, int $columnNumber = null) {
-		return $this->dbInstance->executeQuery ( $sql )->getData () [$columnNumber];
+		return \array_values($this->dbInstance->executeQuery ( $sql )->getFirst()) [$columnNumber];
 	}
 
 	public function executeStatement($statement, array $values = null) {
