@@ -157,7 +157,7 @@ class TarantoolStatement {
 	 */
 	public function fetchColumn($column) {
 		$column=$column??0;
-		$first=$this->queryResult->getFirst();
+		$first=\array_values($this->queryResult->getFirst());
 		return $first[$column] ?? null;
 	}
 
