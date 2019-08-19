@@ -24,6 +24,11 @@ class TarantoolStatement {
 	 * @var Client
 	 */
 	private $dbInstance;
+	
+	/**
+	 * @var \Tarantool\Client\Handler\Handler
+	 */
+	private $handler;
 
 	/**
 	 *
@@ -59,14 +64,14 @@ class TarantoolStatement {
 		$request = new ExecuteRequest($this->sql, $params);
 		
 		return new SqlUpdateResult(
-			$this->dbInstance->getHandler()->handle($request)->getBodyField(Keys::SQL_INFO)
+			$this->handler->handle($request)->getBodyField(Keys::SQL_INFO)
 		);
 	}
 	
 	protected function executeQuery($params=[]) : SqlQueryResult{
 		$params=$this->unpackParams($params);
 		$request = new ExecuteRequest($this->sql, $params);
-		$response = $this->dbInstance->getHandler()->handle($request);
+		$response = $this->handler->handle($request);
 		return $this->queryResult=new SqlQueryResult(
 			$response->getBodyField(Keys::DATA),
 			$response->getBodyField(Keys::METADATA)
@@ -76,6 +81,7 @@ class TarantoolStatement {
 	public function __construct(Client $dbInstance, $sql = null) {
 		$this->dbInstance = $dbInstance;
 		$this->sql = $sql;
+		$this->handler=$dbInstance->getHandler();
 		$this->type=(\substr ( \strtolower(\trim($sql)), 0, \strlen ( 'select' ) ) === 'select');
 	}
 
@@ -115,6 +121,15 @@ class TarantoolStatement {
 		$params=$params??$this->params;
 		return $this->executeQuery($params);
 	}
+	
+	protected function getFields(){
+		$metas=$this->queryResult->getMetadata();
+		$result=[];
+		foreach ($metas as $meta){
+			$result[]=\current($meta);
+		}
+		return $result;
+	}
 
 	/**
 	 * Returns all the datas in the SqlQueryResult
@@ -122,7 +137,17 @@ class TarantoolStatement {
 	 * @return array
 	 */
 	public function fetchAll() {
-		return \iterator_to_array($this->queryResult);
+		$datas=$this->queryResult->getData();
+		$fields=$this->getFields();
+		$result=[];
+		foreach ($datas as $row){
+			$resultRow=[];
+			foreach ($row as $index=>$value){
+				$resultRow[$fields[$index]]=$value;
+			}
+			$result[]=$resultRow;
+		}
+		return $result;
 	}
 	
 	/**
