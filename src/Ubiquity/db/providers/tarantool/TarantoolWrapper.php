@@ -233,4 +233,30 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	private function getSpaceIdByName(string $spaceName): int {
 		return $this->dbInstance->getSpace($spaceName)->getId();
 	}
+	
+	/**
+	 * @param string $dbType
+	 * @param string $dbName
+	 * @param string $serverName
+	 * @param string $port
+	 * @param string $user
+	 * @param string $password
+	 * @param array $options
+	 * @return Client
+	 */
+	public function getNewDbInstance(string $dbType, $dbName, $serverName, string $port, string $user, string $password, array $options) {
+		$infoUser='';
+		$opts='';
+		if($user!=null){
+			$infoUser=$user;
+			if($password!=null){
+				$infoUser.=':'.$password;
+			}
+			$serverName=$infoUser.'@'.$serverName;
+		}
+		if(\count($options)>0){
+			$opts='?'.\http_build_query($options);
+		}
+		return Client::fromDsn ( $this->getDSN ( $serverName, $port, $dbName ).$opts );
+	}
 }
