@@ -6,6 +6,7 @@ use Tarantool\Client\Client;
 use Tarantool\Client\Schema\Space;
 use Tarantool\Client\Schema\Criteria;
 use Ubiquity\db\providers\AbstractDbWrapper;
+use Ubiquity\exceptions\DBException;
 
 /**
  * Ubiquity\db\providers\tarantool$TarantoolWrapper
@@ -258,5 +259,13 @@ class TarantoolWrapper extends AbstractDbWrapper {
 			$opts='?'.\http_build_query($options);
 		}
 		return Client::fromDsn ( $this->getDSN ( $serverName, $port, $dbName ).$opts );
+	}
+	
+	public function pool() {
+		throw new DBException( 'Tarantool does not accept connection pooling' );
+	}
+	
+	public function freePool($db) {
+		throw new DBException ( 'tarantool does not accept connection pooling' );
 	}
 }
