@@ -268,4 +268,17 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	public function freePool($db) {
 		throw new DBException ( 'tarantool does not accept connection pooling' );
 	}
+	
+	public function setPool($pool) {
+		throw new DBException ( 'tarantool does not accept connection pooling' );
+	}
+
+	public function _optPrepareAndExecute($sql, array $values = null) {
+		$statement = $this->_getStatement ( $sql );
+		if ($statement->query ( $values )) {
+			return $statement->fetchAll ();
+		}
+		return false;
+	}
+
 }
