@@ -20,6 +20,10 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	protected $transactionLevel = 0;
 	protected $lastInsertId;
 	
+	protected function getInstance(){
+		return $this->dbInstance;
+	}
+	
 	public function __construct($dbType = 'default') {
 		$this->quote = '"';
 	}
@@ -54,7 +58,7 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	public function prepareStatement(string $sql) {
-		return new TarantoolStatement ( $this->dbInstance, $sql );
+		return new TarantoolStatement ( $this->getInstance(), $sql );
 	}
 
 	public function fetchColumn($statement, array $values = null, int $columnNumber = null) {
@@ -65,11 +69,11 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	public function getStatement($sql) {
-		return new TarantoolStatement ( $this->dbInstance, $sql );
+		return new TarantoolStatement ( $this->getInstance(), $sql );
 	}
 
 	public function execute($sql) {
-		return $this->dbInstance->executeUpdate ( $sql );
+		return $this->getInstance()->executeUpdate ( $sql );
 	}
 
 	public function connect(string $dbType, $dbName, $serverName, string $port, string $user, string $password, array $options) {
@@ -97,17 +101,17 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	public function query(string $sql) {
-		$st=new TarantoolStatement($this->dbInstance,$sql);
+		$st=new TarantoolStatement($this->getInstance(),$sql);
 		$st->query();
 		return $st;
 	}
 
 	public function queryAll(string $sql, int $fetchStyle = null) {
-		return \iterator_to_array($this->dbInstance->executeQuery ( $sql ));
+		return \iterator_to_array($this->getInstance()->executeQuery ( $sql ));
 	}
 
 	public function queryColumn(string $sql, int $columnNumber = null) {
-		return \array_values($this->dbInstance->executeQuery ( $sql )->getFirst()) [$columnNumber];
+		return \array_values($this->getInstance()->executeQuery ( $sql )->getFirst()) [$columnNumber];
 	}
 
 	public function executeStatement($statement, array $values = null) {
@@ -115,7 +119,7 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	public function getTablesName() {
-		$schema = $this->dbInstance->getSpaceById ( Space::VSPACE_ID );
+		$schema = $this->getInstance()->getSpaceById ( Space::VSPACE_ID );
 		$rs = $schema->select(Criteria::key([512])->andGeIterator());
 		$result = [ ];
 		foreach ( $rs as $item ) {
@@ -156,7 +160,7 @@ class TarantoolWrapper extends AbstractDbWrapper {
 
 	public function ping() {
 		try {
-			$this->dbInstance->ping ();
+			$this->getInstance()->ping ();
 		} catch ( \Exception $e ) {
 			return false;
 		}
@@ -164,9 +168,10 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	public function getPrimaryKeys($tableName) {
+		$dbInstance=$this->getInstance();
 		$idSpace = $this->getSpaceIdByName ( $tableName );
-		$indexesInfos = $this->dbInstance->getSpaceById ( Space::VINDEX_ID )->select ( Criteria::key ( [ $idSpace ] ) );
-		$fieldsInfos = $this->dbInstance->getSpaceById ( Space::VSPACE_ID )->select ( Criteria::key ( [ $idSpace ] ) ) [0] [6];
+		$indexesInfos = $dbInstance->getSpaceById ( Space::VINDEX_ID )->select ( Criteria::key ( [ $idSpace ] ) );
+		$fieldsInfos = $dbInstance->getSpaceById ( Space::VSPACE_ID )->select ( Criteria::key ( [ $idSpace ] ) ) [0] [6];
 		$pks = [ ];
 		if ([ ] !== $fieldsInfos && $firstIndex = \current ( $indexesInfos )) {
 			$indexedfields = $firstIndex [5];
@@ -182,7 +187,7 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	
 	public function getFieldsInfos($tableName) {
 		$idSpace = $this->getSpaceIdByName ( $tableName );
-		$fieldsInfos = $this->dbInstance->getSpaceById ( Space::VSPACE_ID )->select ( Criteria::key ( [ $idSpace ] ) ) [0] [6];
+		$fieldsInfos = $this->getInstance()->getSpaceById ( Space::VSPACE_ID )->select ( Criteria::key ( [ $idSpace ] ) ) [0] [6];
 		$result=[];
 		foreach ($fieldsInfos as $infoField){
 			$result[$infoField['name']]=['Type'=>$infoField['type'],'Nullable'=>$infoField['is_nullable']];
@@ -192,11 +197,12 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	
 	public function getForeignKeys($tableName, $pkName, $dbName = null) {
 		$result=[];
-		$v_space=$this->dbInstance->getSpaceById ( Space::VSPACE_ID );
+		$dbInstance=$this->getInstance();
+		$v_space=$dbInstance->getSpaceById ( Space::VSPACE_ID );
 		$idSpace = $this->getSpaceIdByName ( $tableName );
 		$fieldsInfos = $v_space->select ( Criteria::key ( [ $idSpace ] ) ) [0] [6];
 		$pkFieldNum=$this->getFieldNum($pkName,$fieldsInfos);
-		$spacefk=$this->dbInstance->getSpaceById ( 356 );//_fk_constraint space id
+		$spacefk=$dbInstance->getSpaceById ( 356 );//_fk_constraint space id
 		$foreignKeysInfos=$spacefk->select(Criteria::index(0));
 		foreach ($foreignKeysInfos as $fkInfos){
 			if($fkInfos[2]===$idSpace){//parent_id same as $tableName id
@@ -232,7 +238,7 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	}
 
 	private function getSpaceIdByName(string $spaceName): int {
-		return $this->dbInstance->getSpace($spaceName)->getId();
+		return $this->getInstance()->getSpace($spaceName)->getId();
 	}
 	
 	/**
