@@ -274,4 +274,8 @@ class TarantoolWrapper extends AbstractDbWrapper {
 	public function getRowNum(string $tableName, string $pkName, string $condition): int {
 		return 1;
 	}
+
+	public function groupConcat(string $fields, string $separator): string {
+		return "GROUP_CONCAT({$fields} SEPARATOR '{$separator}')";
+	}
 }
