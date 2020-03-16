@@ -35,7 +35,7 @@ class TarantoolWrapper extends AbstractDbWrapper {
 		return false;
 	}
 
-	public function lastInsertId() {
+	public function lastInsertId($name = null) {
 		return $this->lastInsertId;
 	}
 
